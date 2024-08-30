@@ -9,6 +9,8 @@ function RecommendationForm() {
     const [locations, setLocations] = useState([]);
     const [caste, setCaste] = useState('');
     const [branches, setBranches] = useState([]);
+    const [errorMessage, setErrorMessage] = useState('');
+    const [rankError, setRankError] = useState('');
     const navigate = useNavigate();
 
     const locationMap = {
@@ -39,7 +41,16 @@ function RecommendationForm() {
     };
 
     const handleRankChange = (e) => {
-        setRank(e.target.value);
+        const value = e.target.value;
+        setRank(value);
+
+        if (value === '0') {
+            setRankError('Please enter a valid rank greater than 0.');
+        } else {
+            setRankError('');
+        }
+
+        setErrorMessage('');
     };
 
     const handleCasteChange = (e) => {
@@ -49,6 +60,16 @@ function RecommendationForm() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        if (!rank || rank <= 0) {
+            setErrorMessage('Please enter a valid rank greater than 0.');
+            return;
+        }
+
+        if (!rank || !caste || locations.length === 0 || branches.length === 0 || !gender) {
+            setErrorMessage('Please fill all required fields.');
+            return;
+        }
+
         const formData = {
             rank,
             caste,
@@ -57,19 +78,10 @@ function RecommendationForm() {
             gender
         };
 
-        console.log('Posting data:', formData);
-
-        if (!rank || !caste || locations.length === 0 || branches.length === 0 || !gender) {
-            alert('Please fill all required fields.');
-            return;
-        }
-
         try {
             const response = await axios.post('http://localhost:5000/api/recommend', formData);
 
             const data = response.data;
-            console.log('Colleges found:', data);
-
             const noColleges = data.length === 0;
 
             navigate('/recommendations', {
@@ -79,7 +91,6 @@ function RecommendationForm() {
                 }
             });
         } catch (error) {
-            console.error('Error occurred:', error);
             navigate('/recommendations', {
                 state: {
                     colleges: [],
@@ -102,6 +113,8 @@ function RecommendationForm() {
                         onChange={handleRankChange}
                         required
                     />
+                    {rankError && <div className="alert">{rankError}</div>}
+                    {errorMessage && <p className="error-message">{errorMessage}</p>}
                 </div>
                 <div className="input-group">
                     <label>Choose Your Gender:</label>
